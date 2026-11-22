@@ -36,11 +36,16 @@ cipher = Fernet(FERNET_KEY.encode())
 
 def init_db():
     conn = sqlite3.connect(DB_PATH)
-    conn.execute("CREATE TABLE IF NOT EXISTS api_keys (id INTEGER PRIMARY KEY, label TEXT, api_key TEXT, secret_key TEXT)")
+    conn.execute("""CREATE TABLE IF NOT EXISTS api_keys (
+        id INTEGER PRIMARY KEY,
+        label TEXT,
+        api_key TEXT,
+        secret_key TEXT,
+        passphrase TEXT
+    )""")
     conn.commit()
     conn.close()
-
-init_db()
+    
 def encrypt_value(value: str) -> str:
     return cipher.encrypt(value.encode()).decode()
 
