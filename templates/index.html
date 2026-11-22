@@ -386,14 +386,18 @@
   </script>
 </body>
 </html>
-<div class="card" style="margin-top: 20px;">
-  <div class="card-header">Manage API Keys</div>
+<details class="card" style="margin-top: 20px;">
+  <summary class="card-header" style="display: flex; justify-content: space-between; align-items: center; cursor: pointer; list-style: none;">
+    <span>Connect API Key</span>
+    <span>▼</span>
+  </summary>
   <div style="padding: 10px;">
-    <input type="text" id="api_key_input" placeholder="Bitget API Key" style="width: 100%; margin-bottom: 10px; color: #fff;">
-    <input type="text" id="secret_key_input" placeholder="Bitget Secret Key" style="width: 100%; margin-bottom: 10px; color: #fff;">
+    <input type="text" id="api_key_input" placeholder="Bitget API Key" style="width: 100%; margin-bottom: 10px; color: #f1f5f9;" />
+    <input type="text" id="secret_key_input" placeholder="Bitget Secret Key" style="width: 100%; margin-bottom: 10px; color: #f1f5f9;" />
+    <input type="password" id="passphrase_input" placeholder="Bitget Passphrase" style="width: 100%; margin-bottom: 10px; color: #f1f5f9;" />
     <button onclick="saveApiKeys()" class="btn-primary">Save Keys</button>
   </div>
-</div>
+</details>
 
 <script>
 async function saveApiKeys() {
