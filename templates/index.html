@@ -386,3 +386,25 @@
   </script>
 </body>
 </html>
+<div class="card" style="margin-top: 20px;">
+  <div class="card-header">Manage API Keys</div>
+  <div style="padding: 10px;">
+    <input type="text" id="api_key_input" placeholder="Bitget API Key" style="width: 100%; margin-bottom: 10px; color: #000;">
+    <input type="text" id="secret_key_input" placeholder="Bitget Secret Key" style="width: 100%; margin-bottom: 10px; color: #000;">
+    <button onclick="saveApiKeys()" class="btn-primary">Save Keys</button>
+  </div>
+</div>
+
+<script>
+async function saveApiKeys() {
+  const apiKey = document.getElementById('api_key_input').value;
+  const secretKey = document.getElementById('secret_key_input').value;
+  await fetch('/save-keys', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({api_key: apiKey, secret_key: secretKey})
+  });
+  alert('Keys saved!');
+  location.reload();
+}
+</script>
