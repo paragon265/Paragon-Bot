@@ -63,15 +63,19 @@ def save_api_keys(label: str, api_key: str, secret_key: str):
     conn.close()
 
 def load_api_keys(label: str):
-    conn = sqlite3.connect(DB_PATH)
     row = conn.execute(
-        "SELECT api_key, secret_key FROM api_keys WHERE label = ? ORDER BY id DESC LIMIT 1",
-        (label,),
-    ).fetchone()
-    conn.close()
-    if not row:
-        return None, None
-    return decrypt_value(row[0]), decrypt_value(row[1])
+    """
+    SELECT api key, secret key, passphrase
+    FROM api keys
+    WHERE label = ?
+    ORDER BY id DESC
+    LIMIT 1
+    """,
+    (label,),
+).fetchone()
+    
+    return decrypt_value(row[0]), decrypt_value(row[1]), decrypt_value(row[2])
+    
 
 def _add_log(action: str, symbol: str, detail: str, pnl: float = 0.0):
     now_str = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
