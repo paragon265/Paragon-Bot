@@ -17,7 +17,7 @@ STATE = {
     "top_pairs_limit": int(os.getenv("TOP_PAIRS_LIMIT", "15")),
     "custom_symbols": [
         s.strip()
-        for s in os.getenv("SYMBOLS", "BTC/USDT:USDT,BGB/USDT:USDT").split(",")
+        for s in os.getenv("SYMBOLS", "BTC/USDT:USDT,ETH/USDT:USDT").split(",")
         if s.strip()
     ],
     "demo_balance_usdt": None,
@@ -108,8 +108,8 @@ def resolve_symbols(exchange: ccxt.bitget) -> list[str]:
 
     if not STATE["scan_all_top"]:
         valid = [s for s in STATE["custom_symbols"] if s in all_perps]
-        return valid if valid else ["BTC/USDT:USDT", "BGB/USDT:USDT"]
-
+        return valid if valid else ["BTC/USDT:USDT", "ETH/USDT:USDT"]
+        
     try:
         tickers = exchange.fetch_tickers(all_perps)
         all_perps.sort(
