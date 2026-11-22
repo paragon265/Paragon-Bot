@@ -4,6 +4,8 @@ from datetime import datetime, timezone
 from flask import Flask, jsonify, render_template, request
 import ccxt
 from strategy_mtf import analyze_mtf
+import sqlite3
+from cryptography.fernet import Fernet
 
 app = Flask(__name__)
 SCAN_LOCK = threading.Lock()
@@ -28,6 +30,43 @@ STATE = {
     "last_error": None,
 }
 
+DB_PATH = "keys.db"
+FERNET_KEY = os.getenv("FERNET_KEY") or Fernet.generate_key().decode()
+cipher = Fernet(FERNET_KEY.encode())
+
+def init_db():
+    conn = sqlite3.connect(DB_PATH)
+    conn.execute("CREATE TABLE IF NOT EXISTS api_keys (id INTEGER PRIMARY KEY, label TEXT, api_key TEXT, secret_key TEXT)")
+    conn.commit()
+    conn.close()
+
+init_db()
+def encrypt_value(value: str) -> str:
+    return cipher.encrypt(value.encode()).decode()
+
+def decrypt_value(token: str) -> str:
+    return cipher.decrypt(token.encode()).decode()
+
+def save_api_keys(label: str, api_key: str, secret_key: str):
+    conn = sqlite3.connect(DB_PATH)
+    conn.execute("DELETE FROM api_keys WHERE label = ?", (label,))
+    conn.execute(
+        "INSERT INTO api_keys (label, api_key, secret_key) VALUES (?, ?, ?)",
+        (label, encrypt_value(api_key), encrypt_value(secret_key)),
+    )
+    conn.commit()
+    conn.close()
+
+def load_api_keys(label: str):
+    conn = sqlite3.connect(DB_PATH)
+    row = conn.execute(
+        "SELECT api_key, secret_key FROM api_keys WHERE label = ? ORDER BY id DESC LIMIT 1",
+        (label,),
+    ).fetchone()
+    conn.close()
+    if not row:
+        return None, None
+    return decrypt_value(row[0]), decrypt_value(row[1])
 
 def _add_log(action: str, symbol: str, detail: str, pnl: float = 0.0):
     now_str = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
@@ -45,9 +84,10 @@ def _add_log(action: str, symbol: str, detail: str, pnl: float = 0.0):
 
 
 def get_bitget_demo() -> ccxt.bitget:
+        db_key, db_secret = load_api_keys("bitget_demo")
     exchange = ccxt.bitget({
-        "apiKey": os.getenv("BITGET_API_KEY", ""),
-        "secret": os.getenv("BITGET_API_SECRET", ""),
+        "apiKey": db_key or os.getenv("BITGET_API_KEY", ""),
+        "secret": db_secret or os.getenv("BITGET_API_SECRET", ""),
         "password": os.getenv("BITGET_API_PASSPHRASE", ""),
         "enableRateLimit": True,
         "options": {
