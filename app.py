@@ -9,6 +9,7 @@ from cryptography.fernet import Fernet
 
 app = Flask(__name__)
 SCAN_LOCK = threading.Lock()
+init_db()
 
 STATE = {
     "last_scan": None,
@@ -395,6 +396,6 @@ def get_keys_route():
 
 
 if __name__ == "__main__":
-    init_db()
+    
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
