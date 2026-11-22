@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>Bitget MTF Cloud Bot</title>
+  <style>
+    :root {
+      --bg: #0b0f17;
+      --card: #141b29;
+      --card-2: #1b2436;
+      --border: #253047;
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+      --green: #10b981;
+      --green-bg: rgba(16, 185, 129, 0.14);
+      --red: #ef4444;
+      --red-bg: rgba(239, 68, 68, 0.14);
+      --amber: #f59e0b;
+      --amber-bg: rgba(245, 158, 11, 0.14);
+      --blue: #3b82f6;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 14px 14px 82px 14px;
+    }
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+    .topbar h1 { font-size: 17px; margin: 0; font-weight: 700; }
+    .pill {
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+    }
+    .pill-green { background: var(--green-bg); color: var(--green); }
+    .pill-amber { background: var(--amber-bg); color: var(--amber); }
+    .pill-red { background: var(--red-bg); color: var(--red); }
+
+    .hero-card {
+      background: linear-gradient(135deg, #162238 0%, #111827 100%);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px;
+      margin-bottom: 14px;
+    }
+    .hero-label { font-size: 12px; color: var(--muted); }
+    .hero-val { font-size: 26px; font-weight: 800; margin: 4px 0 10px 0; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .mini-stat { background: rgba(15, 23, 42, 0.55); padding: 8px 10px; border-radius: 10px; }
+    .mini-stat span { display: block; font-size: 11px; color: var(--muted); }
+    .mini-stat strong { font-size: 13px; }
+
+    .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+    button {
+      border: none;
+      border-radius: 10px;
+      padding: 11px 12px;
+      font-weight: 700;
+      font-size: 13px;
+      cursor: pointer;
+      color: #fff;
+    }
+    .btn-primary { background: var(--blue); }
+    .btn-dark { background: var(--card-2); border: 1px solid var(--border); }
+    .btn-danger { background: var(--red-bg); color: var(--red); border: 1px solid rgba(239,68,68,0.3); padding: 7px 10px; font-size: 12px; }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 12px;
+    }
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .card-title { font-weight: 700; font-size: 14px; }
+    .row { display: flex; justify-content: space-between; font-size: 12.5px; padding: 4px 0; color: var(--muted); }
+    .row strong { color: var(--text); }
+    .pos-green { color: var(--green) !important; }
+    .neg-red { color: var(--red) !important; }
+
+    .tab-view { display: none; }
+    .tab-view.active { display: block; }
+
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: #101622;
+      border-top: 1px solid var(--border);
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      padding: 8px 4px;
+      z-index: 50;
+    }
+    .nav-btn {
+      background: transparent;
+      color: var(--muted);
+      font-size: 11px;
+      padding: 4px 2px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+    }
+    .nav-btn.active { color: var(--blue); font-weight: 700; }
+
+    input, select {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 10px;
+      border-radius: 8px;
+      margin: 6px 0 10px 0;
+      font-size: 13px;
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--border); }
+    th { color: var(--muted); font-weight: 600; }
+    .err-banner { background: var(--red-bg); color: var(--red); padding: 10px; border-radius: 10px; font-size: 12px; margin-bottom: 12px; }
+  </style>
+</head>
+<body>
+
+  <div class="topbar">
+    <h1>Bitget Demo MTF Cloud</h1>
+    <span id="autotrade-pill" class="pill {{ 'pill-green' if state.auto_trade else 'pill-amber' }}">
+      {{ 'AUTO-TRADE ON' if state.auto_trade else 'MONITOR ONLY' }}
+    </span>
+  </div>
+
+  <div id="err-box" class="err-banner" style="display: {{ 'block' if state.last_error else 'none' }};">
+    {{ state.last_error or '' }}
+  </div>
+
+  <div id="tab-home" class="tab-view active">
+    <div class="hero-card">
+      <div class="hero-label">Bitget Demo Futures Equity (USDT)</div>
+      <div class="hero-val" id="hero-equity">
+        {{ ('$' ~ state.equity_usdt) if state.equity_usdt is not none else 'Connect Demo API' }}
+      </div>
+      <div class="grid-3">
+        <div class="mini-stat">
+          <span>Available</span>
+          <strong id="hero-free">{{ ('$' ~ state.demo_balance_usdt) if state.demo_balance_usdt is not none else '--' }}</strong>
+        </div>
+        <div class="mini-stat">
+          <span>Floating PnL</span>
+          <strong id="hero-upnl" class="{{ 'pos-green' if state.unrealized_pnl_total >= 0 else 'neg-red' }}">
+            {{ ('+' if state.unrealized_pnl_total >= 0 else '') ~ state.unrealized_pnl_total }}
+          </strong>
+        </div>
+        <div class="mini-stat">
+          <span>Open Trades</span>
+          <strong id="hero-count">{{ state.open_positions | length }}</strong>
+        </div>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn-primary" id="scan-btn" onclick="triggerScan()">Scan Markets Now</button>
+      <button class="btn-dark" onclick="toggleAutoTrade()">Toggle Auto-Trade</button>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Exchange & Strategy Binding</span>
+        <span class="pill {{ 'pill-green' if has_keys else 'pill-red' }}">
+          {{ 'Bitget Demo Bound' if has_keys else 'Keys Missing' }}
+        </span>
+      </div>
+      <div class="row"><span>Engine</span><strong>MTF Smart Money (1D → 4H → 1H → 15m)</strong></div>
+      <div class="row"><span>Margin / Risk</span><strong>Isolated • 1.0% Risk • Min 1.5R</strong></div>
+      <div class="row"><span>Last Cloud Sync</span><strong id="last-scan">{{ state.last_scan or 'Waiting for /scan' }}</strong></div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Latest MTF Scanner Signals</span>
+      </div>
+      <div id="home-signals">
+        {% if state.scan_results %}
+          {% for item in state.scan_results %}
+            <div style="padding: 8px 0; border-bottom: 1px solid var(--border);">
+              <div class="card-header" style="margin-bottom:4px;">
+                <strong>{{ item.symbol }}</strong>
+                <span class="pill {{ 'pill-green' if item.signal == 'LONG' else ('pill-red' if item.signal == 'SHORT' else 'pill-amber') }}">
+                  {{ item.signal }} ({{ item.htf_bias or 'N/A' }})
+                </span>
+              </div>
+              <div style="font-size:12px; color:var(--muted);">{{ item.reason }}</div>
+            </div>
+          {% endfor %}
+        {% else %}
+          <div style="font-size:12px; color:var(--muted);">Tap "Scan Markets Now" or wait for cron-job.org ping.</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div id="tab-futures" class="tab-view">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Active Bitget Demo Positions</span>
+        <span style="font-size:12px; color:var(--muted);">Synced Live</span>
+      </div>
+      <div id="positions-list">
+        {% if state.open_positions %}
+          {% for p in state.open_positions %}
+            <div class="card" style="background: var(--card-2); margin-bottom:8px;">
+              <div class="card-header">
+                <strong>{{ p.symbol }} • {{ p.side }} {{ p.leverage }}x</strong>
+                <span class="{{ 'pos-green' if p.unrealizedPnl >= 0 else 'neg-red' }}" style="font-weight:700;">
+                  {{ ('+' if p.unrealizedPnl >= 0 else '') ~ p.unrealizedPnl }} USDT
+                </span>
+              </div>
+              <div class="row"><span>Size (Contracts)</span><strong>{{ p.contracts }}</strong></div>
+              <div class="row"><span>Entry / Mark</span><strong>{{ p.entryPrice }} / {{ p.markPrice }}</strong></div>
+              <div class="row"><span>Margin Mode</span><strong>{{ p.marginMode | upper }}</strong></div>
+              <div style="margin-top:8px; text-align:right;">
+                <button class="btn-danger" onclick="closePos('{{ p.symbol }}', '{{ p.side }}', {{ p.contracts }})">Close Position</button>
+              </div>
+            </div>
+          {% endfor %}
+        {% else %}
+          <p style="font-size:12.5px; color:var(--muted);">No open perpetual positions on Bitget Demo.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div id="tab-logs" class="tab-view">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Execution & Scanner Logs</span>
+      </div>
+      <div id="logs-list">
+        {% if state.execution_logs %}
+          {% for log in state.execution_logs %}
+            <div style="padding: 8px 0; border-bottom: 1px solid var(--border); font-size:12px;">
+              <div class="card-header" style="margin-bottom:2px;">
+                <strong>{{ log.action }} • {{ log.symbol }}</strong>
+                <span style="color:var(--muted);">{{ log.time }}</span>
+              </div>
+              <div style="color:var(--muted);">{{ log.detail }}</div>
+            </div>
+          {% endfor %}
+        {% else %}
+          <p style="font-size:12.5px; color:var(--muted);">No actions logged yet in this session.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div id="tab-profit" class="tab-view">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Realized Futures PnL (Bitget Demo)</span>
+      </div>
+      <table>
+        <thead>
+          <tr><th>Date</th><th>Futures ($)</th><th>Total ($)</th></tr>
+        </thead>
+        <tbody id="profit-table">
+          {% if state.daily_pnl %}
+            {% for d in state.daily_pnl %}
+              <tr>
+                <td>{{ d.date }}</td>
+                <td class="{{ 'pos-green' if d.futures >= 0 else 'neg-red' }}">{{ d.futures }}</td>
+                <td class="{{ 'pos-green' if d.total >= 0 else 'neg-red' }}">{{ d.total }}</td>
+              </tr>
+            {% endfor %}
+          {% else %}
+            <tr><td colspan="3" style="color:var(--muted);">No closed demo trades recorded yet.</td></tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div id="tab-pairs" class="tab-view">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Perpetual Pairs Scanner Scope</span>
+      </div>
+      <label style="font-size:12px; color:var(--muted);">Scanner Mode</label>
+      <select id="pair-mode" onchange="togglePairInput()">
+        <option value="custom" {{ 'selected' if not state.scan_all_top else '' }}>Selected Pairs (Start with BTC & BGB)</option>
+        <option value="all_top" {{ 'selected' if state.scan_all_top else '' }}>All Active USDT-M Perpetuals (Top Volume)</option>
+      </select>
+
+      <div id="custom-box" style="display: {{ 'none' if state.scan_all_top else 'block' }};">
+        <label style="font-size:12px; color:var(--muted);">Comma-separated pairs</label>
+        <input id="custom-symbols" value="{{ state.custom_symbols | join(', ') }}" placeholder="BTC/USDT:USDT, BGB/USDT:USDT, ETH/USDT:USDT" />
+      </div>
+
+      <div id="top-box" style="display: {{ 'block' if state.scan_all_top else 'none' }};">
+        <label style="font-size:12px; color:var(--muted);">Max Top Volume USDT Perpetuals to Scan (2–40)</label>
+        <input id="top-limit" type="number" min="2" max="40" value="{{ state.top_pairs_limit }}" />
+      </div>
+
+      <button class="btn-primary" style="width:100%;" onclick="savePairs()">Save Scanner Pairs</button>
+    </div>
+  </div>
+
+  <div class="bottom-nav">
+    <button class="nav-btn active" onclick="switchTab('home', this)"><span>Home</span></button>
+    <button class="nav-btn" onclick="switchTab('futures', this)"><span>Futures</span></button>
+    <button class="nav-btn" onclick="switchTab('logs', this)"><span>Logs</span></button>
+    <button class="nav-btn" onclick="switchTab('profit', this)"><span>Profit</span></button>
+    <button class="nav-btn" onclick="switchTab('pairs', this)"><span>Pairs</span></button>
+  </div>
+
+  <script>
+    function switchTab(name, el) {
+      document.querySelectorAll(".tab-view").forEach(v => v.classList.remove("active"));
+      document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
+      document.getElementById("tab-" + name).classList.add("active");
+      el.classList.add("active");
+    }
+
+    function togglePairInput() {
+      const mode = document.getElementById("pair-mode").value;
+      document.getElementById("custom-box").style.display = mode === "custom" ? "block" : "none";
+      document.getElementById("top-box").style.display = mode === "all_top" ? "block" : "none";
+    }
+
+    async function triggerScan() {
+      const btn = document.getElementById("scan-btn");
+      btn.textContent = "Scanning...";
+      btn.disabled = true;
+      try {
+        await fetch("/manual-scan", { method: "POST" });
+        location.reload();
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Scan Markets Now";
+      }
+    }
+
+    async function toggleAutoTrade() {
+      const res = await fetch("/toggle-autotrade", { method: "POST" });
+      const data = await res.json();
+      const pill = document.getElementById("autotrade-pill");
+      pill.textContent = data.auto_trade ? "AUTO-TRADE ON" : "MONITOR ONLY";
+      pill.className = "pill " + (data.auto_trade ? "pill-green" : "pill-amber");
+    }
+
+    async function savePairs() {
+      const mode = document.getElementById("pair-mode").value;
+      const symbols = document.getElementById("custom-symbols").value;
+      const limit = document.getElementById("top-limit").value;
+      await fetch("/update-pairs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mode, symbols, limit })
+      });
+      triggerScan();
+    }
+
+    async function closePos(symbol, side, contracts) {
+      if (!confirm(`Close ${side} position on ${symbol}?`)) return;
+      await fetch("/close-position", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ symbol, side, contracts })
+      });
+      location.reload();
+    }
+  </script>
+</body>
+</html>
