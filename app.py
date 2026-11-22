@@ -52,7 +52,7 @@ def encrypt_value(value: str) -> str:
 def decrypt_value(token: str) -> str:
     return cipher.decrypt(token.encode()).decode()
 
-def save_api_keys(label: str, api_key: str, secret_key: str, passphrase' str):
+def save_api_keys(label: str, api_key: str, secret_key: str, passphrase: str):
     conn = sqlite3.connect(DB_PATH)
     conn.execute("DELETE FROM api_keys WHERE label = ?", (label,))
     conn.execute(
