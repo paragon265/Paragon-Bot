@@ -351,7 +351,17 @@ def close_position():
     except Exception as exc:
         return jsonify({"error": str(exc)}), 500
 
+@app.route("/save-keys", methods=["POST"])
+def save_keys_route():
+    data = request.json
+    save_api_keys("bitget_demo", data.get("api_key", ""), data.get("secret_key", ""))
+    return jsonify({"status": "keys saved"})
 
+@app.route("/get-keys", methods=["GET"])
+def get_keys_route():
+    api_key, secret_key = load_api_keys("bitget_demo")
+    return jsonify({"has_keys": bool(api_key)})
+        
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
