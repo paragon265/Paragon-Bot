@@ -352,9 +352,12 @@ def close_position():
         return jsonify({"error": str(exc)}), 500
 
 @app.route("/save-keys", methods=["POST"])
-def save_keys_route():
-    data = request.json
-    save_api_keys("bitget_demo", data.get("api_key", ""), data.get("secret_key", ""))
+def save_keys():
+    data = request.get_json() or {}
+    api_key = data.get("api_key", "")
+    secret_key = data.get("secret_key", "")
+    passphrase = data.get("BITGET_API_PASSPHRASE") or data.get("passphrase", "")
+    save_api_keys("bitget_demo", api_key, secret_key, passphrase)
     return jsonify({"status": "keys saved"})
 
 @app.route("/get-keys", methods=["GET"])
