@@ -84,7 +84,7 @@ def _add_log(action: str, symbol: str, detail: str, pnl: float = 0.0):
 
 
 def get_bitget_demo() -> ccxt.bitget:
-        db_key, db_secret = load_api_keys("bitget_demo")
+    db_key, db_secret = load_api_keys("bitget_demo")
     exchange = ccxt.bitget({
         "apiKey": db_key or os.getenv("BITGET_API_KEY", ""),
         "secret": db_secret or os.getenv("BITGET_API_SECRET", ""),
