@@ -385,7 +385,6 @@
     }
   </script>
 </body>
-</html>
 <details class="card" style="margin-top: 20px;">
   <summary class="card-header" style="display: flex; justify-content: space-between; align-items: center; cursor: pointer; list-style: none;">
     <span>Connect API Key</span>
@@ -401,14 +400,25 @@
 
 <script>
 async function saveApiKeys() {
-  const apiKey = document.getElementById('api_key_input').value;
-  const secretKey = document.getElementById('secret_key_input').value;
-  await fetch('/save-keys', {
+  const apiKey = document.getElementById('api_key_input').value.trim();
+  const secretKey = document.getElementById('secret_key_input').value.trim();
+  const passphrase = document.getElementById('passphrase_input').value.trim();
+
+  const res = await fetch('/save-keys', {
     method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({api_key: apiKey, secret_key: secretKey})
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      api_key: apiKey,
+      secret_key: secretKey,
+      passphrase: passphrase
+    })
   });
-  alert('Keys saved!');
-  location.reload();
+
+  if (res.ok) {
+    alert('Keys saved!');
+    location.reload();
+  } else {
+    alert('Failed to save keys.');
+  }
 }
 </script>
