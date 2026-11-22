@@ -54,13 +54,21 @@ def decrypt_value(token: str) -> str:
 
 def save_api_keys(label: str, api_key: str, secret_key: str, passphrase: str):
     conn = sqlite3.connect(DB_PATH)
-    conn.execute("DELETE FROM api_keys WHERE label = ?", (label,))
     conn.execute(
-        "INSERT INTO api_keys (label, api_key, secret_key) VALUES (?, ?, ?)",
-        (label, encrypt_value(api_key), encrypt_value(secret_key)),
+        "DELETE FROM api_keys WHERE label = ?", (label,)
+    )
+    conn.execute(
+        "INSERT INTO api_keys (label, api_key, secret_key, passphrase) VALUES (?, ?, ?, ?)",
+        (
+            label,
+            encrypt_value(api_key),
+            encrypt_value(secret_key),
+            encrypt_value(passphrase),
+        ),
     )
     conn.commit()
     conn.close()
+
 
 def load_api_keys(label: str):
     row = conn.execute(
