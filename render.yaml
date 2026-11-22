@@ -17,7 +17,7 @@ services:
       - key: BITGET_API_PASSPHRASE
         sync: false
       - key: SYMBOLS
-        value: BTC/USDT:USDT,BGB/USDT:USDT
+        value: BTC/USDT:USDT,ETH/USDT:USDT
       - key: MARGIN_MODE
         value: isolated
       - key: LEVERAGE
